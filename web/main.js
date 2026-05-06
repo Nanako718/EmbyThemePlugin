@@ -30,8 +30,6 @@ class Home {
 	}
 
 	static start() {
-		this.initLoading();
-
 		this.cache = { item: new Map() };
 		this._sectionsObserver = null;
 		this._bodyFallbackObserver = null;
@@ -48,6 +46,8 @@ class Home {
 					if (window.MistyLoading) window.MistyLoading.fadeRemove();
 					return;
 				}
+				// 只在进入首页时才确保 loading 存在
+				this.initLoading();
 				const view = e.target;
 				if (!view || !view.classList.contains("view")) return;
 
@@ -57,11 +57,6 @@ class Home {
 				});
 
 				view.setAttribute("data-type", "home");
-
-				// 无论从哪里进入主页，只要没有 banner 就保证显示 loading
-				if (!view.querySelector(".misty-banner") && !document.querySelector(".misty-loading")) {
-					this.initLoading();
-				}
 
 				if (!detail.isRestored) {
 					this.observeHomeSectionsContainer(view);
