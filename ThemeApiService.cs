@@ -11,8 +11,6 @@ namespace Emby.Plugin.MistyTheme
         public void Post(ApplyThemeRequest _)
         {
             var webPath = PathHelper.FindDashboardPath();
-            ThemeManager.CopyAssets(webPath);
-
             if (Plugin.Instance?.Configuration.EnableNewUI == true)
                 ThemeManager.Inject(webPath);
             else

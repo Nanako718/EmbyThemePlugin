@@ -10,19 +10,12 @@ namespace Emby.Plugin.MistyTheme
         {
             try
             {
-                var webPath = PathHelper.FindDashboardPath();
+                var webPath   = PathHelper.FindDashboardPath();
                 var indexPath = Path.Combine(webPath, "index.html");
 
-                Console.WriteLine($"[MistyTheme] dashboard path: {webPath}");
-                Console.WriteLine($"[MistyTheme] index.html exists: {File.Exists(indexPath)}");
-                Console.WriteLine($"[MistyTheme] Plugin.Instance: {(Plugin.Instance == null ? "NULL" : "OK")}");
+                Console.WriteLine($"[MistyTheme] path={webPath} exists={File.Exists(indexPath)}");
 
-                ThemeManager.CopyAssets(webPath);
-
-                // Plugin.Instance 为 null 时默认启用
                 var enabled = Plugin.Instance?.Configuration.EnableNewUI ?? true;
-                Console.WriteLine($"[MistyTheme] EnableNewUI: {enabled}");
-
                 if (enabled)
                     ThemeManager.Inject(webPath);
                 else
