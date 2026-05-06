@@ -234,7 +234,7 @@ class Home {
 				}, 16)
 			<\/script>
 			`;
-			$(document.head || document.documentElement).append(script);
+			(document.head || document.documentElement).insertAdjacentHTML("beforeend", script);
 		});
 	}
 
@@ -265,12 +265,12 @@ class Home {
 	}
 
 	static async initBanner(view, sections) {
-		const $view = $(view);
-		if ($view.find(".misty-banner").length) return;
+		if (view.querySelector(".misty-banner")) return;
 
 		if (!document.querySelector(".misty-loading")) this.initLoading();
 
-		const $banner = $(`
+		const tmp = document.createElement("div");
+		tmp.innerHTML = `
 		<div class="misty-banner">
 			<div class="misty-banner-body"></div>
 			<div class="misty-banner-item">
@@ -285,28 +285,30 @@ class Home {
 					<img class="misty-banner-logo" draggable="false" decoding="async" alt="Logo" src="">
 				</div>
 			</div>
-		</div>
-		`);
+		</div>`;
+		const banner = tmp.firstElementChild;
 
 		const liveSection = view.querySelector(".sections") || sections;
 		const insertParent = liveSection?.parentNode ?? view.querySelector(".homeSectionsContainer") ?? view;
-		insertParent.insertBefore($banner[0], liveSection?.parentNode ? liveSection : null);
+		insertParent.insertBefore(banner, liveSection?.parentNode ? liveSection : null);
 
 		this._bannerInView = true;
 		this._bannerObserver = new IntersectionObserver((entries) => {
 			this._bannerInView = entries[0].isIntersecting;
 		}, { threshold: 0 });
-		this._bannerObserver.observe($banner[0]);
+		this._bannerObserver.observe(banner);
 
 		const canvas = document.createElement("canvas");
 		canvas.className = "misty-banner-canvas";
-		$banner.find(".misty-banner-body")[0].prepend(canvas);
+		banner.querySelector(".misty-banner-body").prepend(canvas);
 		this.glInit(canvas);
 
-		$banner.on("click", ".misty-banner-more", function (e) {
+		banner.addEventListener("click", function (e) {
+			const btn = e.target.closest(".misty-banner-more");
+			if (!btn) return;
 			e.preventDefault();
 			e.stopPropagation();
-			const id = String($(this).data("item-id") || "").replace(/[^a-zA-Z0-9-]/g, "");
+			const id = String(btn.dataset.itemId || "").replace(/[^a-zA-Z0-9-]/g, "");
 			if (!id) return;
 			Home.injectCode(`
 				(function(){
@@ -344,12 +346,11 @@ class Home {
 		if (itemId === this._currentItemId) return;
 		this._currentItemId = itemId;
 
-		const $view = $(view);
-		const $item  = $view.find(".misty-banner-item");
-		const $h1    = $item.find("h1");
-		const $p     = $item.find("p");
-		const $btn   = $item.find(".misty-banner-more");
-		const $logo  = $view.find(".misty-banner-logo");
+		const item_el  = view.querySelector(".misty-banner-item");
+		const h1       = item_el?.querySelector("h1");
+		const p        = item_el?.querySelector("p");
+		const btn      = item_el?.querySelector(".misty-banner-more");
+		const logo     = view.querySelector(".misty-banner-logo");
 
 		let item;
 		try { item = await this.getItem(itemId); } catch (_) { return; }
@@ -369,44 +370,42 @@ class Home {
 		const logoSrc = logoTag ? `${serverUrl}/emby/Items/${itemId}/Images/Logo/0?tag=${logoTag}&maxWidth=600&quality=90` : "";
 
 		if (isFirst) {
-			// 首帧：item 还没有 active，直接更新内容再激活
-			$h1.attr("data-title", item.Name || "").text("");
-			$p.text(item.Overview || "");
-			$btn.attr("data-item-id", itemId);
-			$logo.attr("src", logoSrc);
+			h1.dataset.title = item.Name || "";
+			h1.textContent = "";
+			p.textContent = item.Overview || "";
+			btn.dataset.itemId = itemId;
+			logo.src = logoSrc;
 			this.glRender(toTex);
 			this._glCurrentTex = toTex;
 
-			// canvas 入场：scale(1.06)→scale(1) + opacity 0→1
-			const canvas = $view.find(".misty-banner-canvas")[0];
+			const canvas = view.querySelector(".misty-banner-canvas");
 			if (canvas) {
 				canvas.classList.add("misty-revealing");
 				canvas.addEventListener("animationend", () => canvas.classList.remove("misty-revealing"), { once: true });
 			}
 
-			void $item[0].offsetHeight;
-			$item.addClass("active");
-			Home.typewriter($h1[0], 2800);
+			void item_el.offsetHeight;
+			item_el.classList.add("active");
+			Home.typewriter(h1, 2800);
 			clearTimeout(this.logoTimer);
-			this.logoTimer = setTimeout(() => $logo.addClass("active"), 3800);
-			// 稍后再撤 loading，让画面先开始动
+			this.logoTimer = setTimeout(() => logo.classList.add("active"), 3800);
 			setTimeout(() => { if (window.MistyLoading) window.MistyLoading.fadeRemove(); }, 200);
 		} else {
-			// 先归零（不可见）→ 再更新内容 → 再激活，避免内容闪现
-			if ($h1[0]) clearTimeout($h1[0]._twTimer);
-			$item.addClass("misty-resetting");           // 瞬间归零（no transition）
-			void $item[0].offsetHeight;                  // 应用归零状态
-			// 此时全部不可见，安全更新内容
-			$h1.attr("data-title", item.Name || "").text("");
-			$p.text(item.Overview || "");
-			$btn.attr("data-item-id", itemId);
-			$logo.attr("src", logoSrc).removeClass("active");
-			$item.removeClass("active misty-resetting"); // 回到 base（opacity:0，transition 生效）
-			void $item[0].offsetHeight;                  // 稳定
-			$item.addClass("active");                    // 从 0 开始，delay 按顺序触发
-			Home.typewriter($h1[0], 2800);
+			if (h1) clearTimeout(h1._twTimer);
+			item_el.classList.add("misty-resetting");
+			void item_el.offsetHeight;
+			h1.dataset.title = item.Name || "";
+			h1.textContent = "";
+			p.textContent = item.Overview || "";
+			btn.dataset.itemId = itemId;
+			logo.src = logoSrc;
+			logo.classList.remove("active");
+			item_el.classList.remove("active", "misty-resetting");
+			void item_el.offsetHeight;
+			item_el.classList.add("active");
+			Home.typewriter(h1, 2800);
 			clearTimeout(this.logoTimer);
-			this.logoTimer = setTimeout(() => $logo.addClass("active"), 3800);
+			this.logoTimer = setTimeout(() => logo.classList.add("active"), 3800);
 			// GL blinds 过渡
 			Home.glTransition(fromTex, toTex, 2500).then(() => {
 				this._glCurrentTex = toTex;
@@ -585,10 +584,8 @@ class Home {
 }
 
 if ("BroadcastChannel" in window) {
-	(function waitForJQuery() {
-		if (typeof $ === "undefined") { setTimeout(waitForJQuery, 16); return; }
-		if ($("meta[name=application-name]").attr("content") == "Emby" || $(".accent-emby") != undefined) {
-			Home.start();
-		}
-	})();
+	const metaApp = document.querySelector("meta[name=application-name]");
+	if (metaApp?.content === "Emby" || document.querySelector(".accent-emby")) {
+		Home.start();
+	}
 }
