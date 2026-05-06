@@ -30,6 +30,11 @@ class Home {
 	}
 
 	static start() {
+		// 初始加载时若不在首页，立即撤掉静态 loading（viewbeforeshow 可能已错过）
+		if (window.MistyLoading && !/[#/]home\b/.test(location.href)) {
+			window.MistyLoading.fadeRemove();
+		}
+
 		this.cache = { item: new Map() };
 		this._sectionsObserver = null;
 		this._bodyFallbackObserver = null;
