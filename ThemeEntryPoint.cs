@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.Logging;
@@ -20,7 +19,7 @@ namespace Emby.Plugin.MistyTheme
             _logger = logger;
         }
 
-        public Task RunAsync()
+        public void Run()
         {
             try
             {
@@ -37,8 +36,6 @@ namespace Emby.Plugin.MistyTheme
             {
                 _logger.LogError(ex, "[MistyTheme] 启动时初始化失败");
             }
-
-            return Task.CompletedTask;
         }
 
         public void Dispose() { }
