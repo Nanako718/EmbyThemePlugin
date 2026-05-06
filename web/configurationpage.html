@@ -3,71 +3,113 @@
 <head><title>Misty Theme</title></head>
 <body>
 
-<div data-role="page" class="page type-interior pluginConfigurationPage"
-     data-require="emby-checkbox,emby-button">
+<div data-role="page"
+     class="page type-interior pluginConfigurationPage"
+     data-require="emby-checkbox,emby-button,emby-select">
 
     <div data-role="content">
         <div class="content-primary">
 
-            <h2 style="margin-bottom:1.5em">Misty Theme</h2>
+            <div class="verticalSection">
+                <div class="sectionTitleContainer">
+                    <h2 class="sectionTitle">Misty Theme</h2>
+                </div>
+            </div>
 
             <form id="MistyThemeForm">
 
-                <div class="checkboxContainer">
+                <div class="checkboxContainer checkboxContainer-withDescription">
                     <label class="emby-checkbox-label">
-                        <input is="emby-checkbox" type="checkbox" id="chkEnable">
-                        <span>启用新 UI（横幅、Loading 动画、自定义样式）</span>
+                        <input is="emby-checkbox" type="checkbox" id="chkEnable" />
+                        <span>启用新 UI</span>
                     </label>
-                    <div class="fieldDescription" style="margin-top:.4em;color:rgba(255,255,255,.5)">
-                        保存后点击「立即应用」；关闭后 index.html 会从备份恢复。
+                    <div class="fieldDescription">
+                        启用后注入横幅、Loading 动画和自定义样式到 index.html。
+                        关闭后自动从备份恢复原始 index.html。
                     </div>
                 </div>
 
-                <br>
+                <br />
 
-                <div style="display:flex;gap:1em;flex-wrap:wrap">
-                    <button is="emby-button" type="submit" class="raised button-submit emby-button">
-                        保存
-                    </button>
-                    <button is="emby-button" type="button" id="btnApply" class="raised emby-button">
-                        立即应用到 index.html
+                <div>
+                    <button is="emby-button" type="submit"
+                            class="raised button-submit block emby-button">
+                        <span>保存并应用</span>
                     </button>
                 </div>
 
-                <p id="statusMsg" style="margin-top:1em;color:rgba(255,255,255,.6)"></p>
+                <div id="statusMsg" style="margin-top:1.2em;padding:.8em 1em;border-radius:4px;display:none"></div>
 
             </form>
+
         </div>
     </div>
 
     <script type="text/javascript">
         var PLUGIN_ID = '4a8b2c6d-1e3f-4a7b-9c2d-8e5f1a0b3c7d';
 
-        // 加载当前配置
-        ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
-            document.getElementById('chkEnable').checked = config.EnableNewUI;
-        });
-
-        // 保存配置
-        document.getElementById('MistyThemeForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
-                config.EnableNewUI = document.getElementById('chkEnable').checked;
-                ApiClient.updatePluginConfiguration(PLUGIN_ID, config).then(function () {
-                    status('已保存。点击「立即应用」使更改生效。');
-                });
+        // pageshow：每次导航到此页都重新读取配置
+        document.querySelector('.pluginConfigurationPage')
+            .addEventListener('pageshow', function () {
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(PLUGIN_ID)
+                    .then(function (config) {
+                        document.getElementById('chkEnable').checked =
+                            config.EnableNewUI !== false; // 默认 true
+                        Dashboard.hideLoadingMsg();
+                    })
+                    .catch(function () {
+                        Dashboard.hideLoadingMsg();
+                        showStatus('读取配置失败', false);
+                    });
             });
-        });
 
-        // 立即应用 / 移除注入
-        document.getElementById('btnApply').addEventListener('click', function () {
-            ApiClient.ajax({ url: ApiClient.getUrl('MistyTheme/Apply'), type: 'POST' })
-                .then(function ()  { status('✓ 已应用，刷新浏览器即可看到效果'); })
-                .catch(function () { status('✗ 应用失败，请查看服务器日志'); });
-        });
+        // 保存 → 立即应用
+        document.getElementById('MistyThemeForm')
+            .addEventListener('submit', function (e) {
+                e.preventDefault();
+                Dashboard.showLoadingMsg();
 
-        function status(msg) {
-            document.getElementById('statusMsg').textContent = msg;
+                ApiClient.getPluginConfiguration(PLUGIN_ID)
+                    .then(function (config) {
+                        config.EnableNewUI =
+                            document.getElementById('chkEnable').checked;
+
+                        return ApiClient.updatePluginConfiguration(PLUGIN_ID, config);
+                    })
+                    .then(function () {
+                        // 保存完成后立即注入 / 移除
+                        return ApiClient.ajax({
+                            url:  ApiClient.getUrl('MistyTheme/Apply'),
+                            type: 'POST'
+                        });
+                    })
+                    .then(function () {
+                        Dashboard.hideLoadingMsg();
+                        var enabled = document.getElementById('chkEnable').checked;
+                        showStatus(
+                            enabled
+                                ? '✓ 已启用，请刷新浏览器'
+                                : '✓ 已关闭，index.html 已恢复',
+                            true
+                        );
+                    })
+                    .catch(function () {
+                        Dashboard.hideLoadingMsg();
+                        showStatus('✗ 操作失败，请查看服务器日志', false);
+                    });
+            });
+
+        function showStatus(msg, ok) {
+            var el = document.getElementById('statusMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            el.style.background = ok
+                ? 'rgba(67,160,71,.18)'
+                : 'rgba(229,57,53,.18)';
+            el.style.color = ok
+                ? 'rgba(165,214,167,1)'
+                : 'rgba(239,154,154,1)';
         }
     </script>
 

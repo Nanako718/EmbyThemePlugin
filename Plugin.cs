@@ -25,7 +25,9 @@ namespace Emby.Plugin.MistyTheme
         {
             new PluginPageInfo
             {
-                Name = "MistyTheme",
+                Name            = "MistyTheme",
+                DisplayName     = "Misty Theme",
+                EnableInMainMenu = true,
                 EmbeddedResourcePath = GetType().Namespace + ".web.configurationpage.html"
             }
         };
