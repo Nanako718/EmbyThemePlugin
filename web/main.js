@@ -585,7 +585,10 @@ class Home {
 }
 
 if ("BroadcastChannel" in window) {
-	if ($("meta[name=application-name]").attr("content") == "Emby" || $(".accent-emby") != undefined) {
-		Home.start();
-	}
+	(function waitForJQuery() {
+		if (typeof $ === "undefined") { setTimeout(waitForJQuery, 16); return; }
+		if ($("meta[name=application-name]").attr("content") == "Emby" || $(".accent-emby") != undefined) {
+			Home.start();
+		}
+	})();
 }
