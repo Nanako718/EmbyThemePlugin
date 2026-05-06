@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head><title>Misty Theme</title></head>
+<body>
+
+<div data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-checkbox,emby-button">
+
+    <div data-role="content">
+        <div class="content-primary">
+
+            <h2 style="margin-bottom:1.5em">Misty Theme</h2>
+
+            <form id="MistyThemeForm">
+
+                <div class="checkboxContainer">
+                    <label class="emby-checkbox-label">
+                        <input is="emby-checkbox" type="checkbox" id="chkEnable">
+                        <span>启用新 UI（横幅、Loading 动画、自定义样式）</span>
+                    </label>
+                    <div class="fieldDescription" style="margin-top:.4em;color:rgba(255,255,255,.5)">
+                        保存后点击「立即应用」；关闭后 index.html 会从备份恢复。
+                    </div>
+                </div>
+
+                <br>
+
+                <div style="display:flex;gap:1em;flex-wrap:wrap">
+                    <button is="emby-button" type="submit" class="raised button-submit emby-button">
+                        保存
+                    </button>
+                    <button is="emby-button" type="button" id="btnApply" class="raised emby-button">
+                        立即应用到 index.html
+                    </button>
+                </div>
+
+                <p id="statusMsg" style="margin-top:1em;color:rgba(255,255,255,.6)"></p>
+
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        var PLUGIN_ID = '4a8b2c6d-1e3f-4a7b-9c2d-8e5f1a0b3c7d';
+
+        // 加载当前配置
+        ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
+            document.getElementById('chkEnable').checked = config.EnableNewUI;
+        });
+
+        // 保存配置
+        document.getElementById('MistyThemeForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            ApiClient.getPluginConfiguration(PLUGIN_ID).then(function (config) {
+                config.EnableNewUI = document.getElementById('chkEnable').checked;
+                ApiClient.updatePluginConfiguration(PLUGIN_ID, config).then(function () {
+                    status('已保存。点击「立即应用」使更改生效。');
+                });
+            });
+        });
+
+        // 立即应用 / 移除注入
+        document.getElementById('btnApply').addEventListener('click', function () {
+            ApiClient.ajax({ url: ApiClient.getUrl('MistyTheme/Apply'), type: 'POST' })
+                .then(function ()  { status('✓ 已应用，刷新浏览器即可看到效果'); })
+                .catch(function () { status('✗ 应用失败，请查看服务器日志'); });
+        });
+
+        function status(msg) {
+            document.getElementById('statusMsg').textContent = msg;
+        }
+    </script>
+
+</div>
+</body>
+</html>

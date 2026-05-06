@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>Emby.Plugin.MistyTheme</AssemblyName>
+    <RootNamespace>Emby.Plugin.MistyTheme</RootNamespace>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <!-- Emby DLL 放在项目根的 lib/ 目录 -->
+  <ItemGroup>
+    <Reference Include="MediaBrowser.Common">
+      <HintPath>lib/MediaBrowser.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MediaBrowser.Model">
+      <HintPath>lib/MediaBrowser.Model.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="MediaBrowser.Controller">
+      <HintPath>lib/MediaBrowser.Controller.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Logging.Abstractions">
+      <HintPath>lib/Microsoft.Extensions.Logging.Abstractions.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- web/ 下所有文件编译为嵌入资源 -->
+  <ItemGroup>
+    <EmbeddedResource Include="web\**\*" />
+  </ItemGroup>
+
+</Project>
